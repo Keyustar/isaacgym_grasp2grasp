@@ -131,6 +131,7 @@ class RobotHand(VecTask):
             -1, 13
         )
         
+        
         self.dof_state = gymtorch.wrap_tensor(dof_state_tensor)
         self.rigid_body_states = gymtorch.wrap_tensor(rigid_body_tensor).view(
             self.num_envs, -1, 13
@@ -213,6 +214,11 @@ class RobotHand(VecTask):
             dtype=torch.float,
             device=self.device,
         )
+        self.contact_steps = torch.zeros(
+            self.num_envs, 
+            device=self.device, 
+            dtype=torch.float32      # 步数类型为浮点数
+        )#接触步数计时器
 
         len_dof_pos_buffer = self.obs_dims["dof_pos_history"]
         assert len_dof_pos_buffer % self.num_actuated_dofs == 0, \
@@ -450,7 +456,7 @@ class RobotHand(VecTask):
         )
         self.goal_states[env_ids] = self.object_init_states[env_ids].clone()
         # lower it to match the height of the hand
-        self.goal_states[env_ids, 2] -= 0.04
+        self.goal_states[env_ids, 2] -= 0.12
         # reset goal orientation
         self.goal_states[env_ids, 3:7] = randomize_rotation(
             rand_floats_goal[:, 0],
@@ -459,7 +465,8 @@ class RobotHand(VecTask):
             self.y_unit_tensor[env_ids],
         )
         self.resetted_visual_goal_states = self.goal_states[env_ids].clone()
-        goal_visual_displacement = [-0.2, -0.06, 0.08]
+        # goal_visual_displacement = [-0.1, 0.05, 0.25]
+        goal_visual_displacement = [0, 0, 0.12]
         # the goal object within the rendered scene will be displaced by this amount from the actual goal
         self.resetted_visual_goal_states[:, 0] += goal_visual_displacement[0]
         self.resetted_visual_goal_states[:, 1] += goal_visual_displacement[1]
@@ -518,6 +525,7 @@ class RobotHand(VecTask):
         if len(goal_env_ids) > 0:
             # overwrite self.goal_states in this function
             self.reset_goal_states(goal_env_ids)
+            self.contact_steps[goal_env_ids] = 0 #重置接触时间计时器
             # set the goal states in the sim
             self.root_state_tensor[self.goal_object_indices[goal_env_ids]] = self.resetted_visual_goal_states
             reset_indices = torch.cat(
@@ -597,7 +605,8 @@ class RobotHand(VecTask):
                     (reset_indices, self.hand_indices[env_ids].to(torch.int32))
                 )
             # reset buffers
-            self.progress_buf[env_ids] = 0
+            self.progress_buf[env_ids] = 0 #重置环境计时器
+            self.contact_steps[env_ids] = 0 #重置接触时间计时器
 
         if len(reset_indices) > 0:
             # apparently this can only be called once per step?
@@ -1128,7 +1137,7 @@ class RobotHand(VecTask):
 
             # add hand - collision filter = -1 to use asset collision filters set in mjcf loader
             actor_handle = self.gym.create_actor(
-                env_ptr, hand_asset, hand_start_pose, "hand", i, -1, 0
+                env_ptr, hand_asset, hand_start_pose, "ourhand", i, -1, 0
             )
             self.gym.set_actor_dof_properties(env_ptr, actor_handle, hand_dof_props)
 
@@ -1138,7 +1147,7 @@ class RobotHand(VecTask):
 
             # set the first body to be black (base of the hand) to match real robot
             self.gym.set_rigid_body_color(
-                env_ptr, actor_handle, 0, gymapi.MESH_VISUAL, gymapi.Vec3(0.25, 0.25, 0.25))
+                env_ptr, actor_handle, 0, gymapi.MESH_VISUAL, gymapi.Vec3(0.25, 1, 0.25))
 
             hand_init_states.append(
                 [
@@ -1239,7 +1248,6 @@ class RobotHand(VecTask):
         self.pose_sensor_handles = to_torch(
             pose_sensor_handles, dtype=torch.long, device=self.device
         )
-
 
     def _parse_cfg(self, cfg):
         """

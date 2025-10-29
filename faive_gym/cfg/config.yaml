@@ -14,7 +14,7 @@ torch_deterministic: False
 # set the maximum number of learning iterations to train for. overrides default per-environment setting
 max_iterations: ''
 
-
+object_type: ["bottle"]
 ## Device config
 #  'physx' or 'flex'
 physics_engine: 'physx'
@@ -29,23 +29,24 @@ graphics_device_id: 0
 ## PhysX arguments
 num_threads: 4 # Number of worker threads per scene used by PhysX - for CPU PhysX only.
 solver_type: 1 # 0: pgs, 1: tgs
-num_subscenes: 4 # Splits the simulation into N physics scenes and runs each one in a separate thread
+num_subscenes: 8 # Splits the simulation into N physics scenes and runs each one in a separate thread
 
 # RLGames Arguments
 # test - if set, run policy in inference mode (requires setting checkpoint to load)
 test: False
 # used to set checkpoint path
 checkpoint: ''
+# checkpoint: 'runs/FaiveHand/nn/last_FaiveHand_ep_49600_rew_81.548996.pth'
 # custom to genetic_hand: if set, always start from epoch 0 no matter what epoch is in the checkpoint, useful for transfer learning from trained policy
 always_start_from_epoch0: False
 # set to True to use multi-gpu horovod training
 multi_gpu: False
 
 wandb_activate: False
-wandb_group: 'srl_ethz'
+wandb_group: 'Hand_transition'
 wandb_name: ${train.params.config.name}
-wandb_entity: ''
-wandb_project: ''
+wandb_entity: 'keyustar'
+wandb_project: 'ShadowHand_transition0'
 capture_video: False
 capture_video_freq: 2000
 capture_video_len: 100

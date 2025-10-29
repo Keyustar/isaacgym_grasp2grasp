@@ -1,0 +1,46 @@
+# load the default environment parameters, and override the ones we want to change
+defaults:
+  - OurHandDefault
+
+# The base RobotHand class suffices for the default P0 robot for now
+name: nowrist
+
+env:
+  numActions: 18
+  object_start_offset: [0, -0.37, 0.15]
+  hand_start_r: [0.1736482, 0,0, 0.9848078]
+
+asset:
+  grasp_file: "/home/cky/DexGraspNet/data/scale0.06/sem-Bottle-437678d4bc6be981c8724d5673a063a6_validated_noforce_transformed_all.npy"
+  model_file: "open_ai_assets_nowrist/hand/shadow_hand.xml"
+  force_sensor_names: ["robot0:ffdistal", "robot0:mfdistal", "robot0:rfdistal","robot0:lfdistal", "robot0:thdistal"]
+  pose_sensor_names: ["robot0:ffdistal", "robot0:mfdistal", "robot0:rfdistal","robot0:lfdistal", "robot0:thdistal"]
+
+observations:
+  obs_dims:
+    dof_position: 18
+    goal_hand_pose: 18
+    goal_hand_pose_diff: 18
+    dof_pos_target: 18
+    dof_speed: 18
+    dof_speed_numerical: 18
+    dof_force: 18
+    obj_pos: 3
+    obj_quat: 4
+    obj_linvel: 3
+    obj_angvel: 3
+    obj_linvel_numerical: 3
+    obj_angvel_numerical: 3
+    goal_pos: 3
+    goal_quat: 4
+    goal_quat_diff: 4
+    pose_sensor_pos: 15 # 3 * 5
+    pose_sensor_quat: 20  # 4 * 5 
+    pose_sensor_linvel: 15  # 3 * 5
+    pose_sensor_angvel: 15  # 3 * 5
+    #force_sensor_force: 30  # 6 * 5
+    fingertip_contact_forces: 15 # 3 * 5
+    actions: 18 
+    obj_pose_history: 35 # 7 dof pose * 5 history length
+    dof_pos_history: 90  # 18 dof joint * 5 history length
+

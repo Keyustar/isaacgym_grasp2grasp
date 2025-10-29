@@ -48,10 +48,19 @@ from isaacgymenvs.utils.utils import set_np_formatting, set_seed
 # register custom tasks for faive_gym here
 from isaacgymenvs.tasks import isaacgym_task_map
 from faive_gym.robot_hand import RobotHand
-from faive_gym.tasks.crawl import Crawl
 isaacgym_task_map["RobotHand"] = RobotHand
+from faive_gym.tasks.crawl import Crawl
 isaacgym_task_map["Crawl"] = Crawl
-
+from faive_gym.tasks.shadowhand import ShadowHand_mine
+isaacgym_task_map["ShadowHand_mine"] = ShadowHand_mine
+from faive_gym.tasks.shadowhand_origin import ShadowHand_mine_origin
+isaacgym_task_map["ShadowHand_mine_origin"] = ShadowHand_mine_origin
+from faive_gym.our_hand import OurHand
+isaacgym_task_map["OurHand"] = OurHand
+from faive_gym.our_hand_nowrist import nowrist
+isaacgym_task_map["nowrist"] = nowrist
+from faive_gym.our_hand_nowrist_selectgrasps import nowristselect
+isaacgym_task_map["nowristselect"] = nowristselect
 ## OmegaConf & Hydra Config
 
 # Resolvers used in hydra configs (see https://omegaconf.readthedocs.io/en/2.1_branch/usage.html#resolvers)
@@ -103,6 +112,7 @@ def launch_rlg_hydra(cfg: DictConfig):
             name=run_name,
             resume="allow",
             monitor_gym=True,
+            dir="/home/cky/faive_gym_oss/faive_gym"
         )
 
     def create_env_thunk(**kwargs):
@@ -121,12 +131,21 @@ def launch_rlg_hydra(cfg: DictConfig):
             **kwargs,
         )
         if cfg.capture_video:
-            envs.is_vector_env = True
-            envs = gym.wrappers.RecordVideo(
-                envs,
-                f"videos/{run_name}",
-                step_trigger=lambda step: step % cfg.capture_video_freq == 0,
-                video_length=cfg.capture_video_len,
+            if cfg.multi_gpu:
+                envs.is_vector_env = True
+                envs = gym.wrappers.RecordVideo(
+                    envs,
+                    f"videos/{run_name}/rank_{rank}",
+                    step_trigger=lambda step: step % cfg.capture_video_freq == 0,
+                    video_length=cfg.capture_video_len,
+                )
+            else:
+                envs.is_vector_env = True
+                envs = gym.wrappers.RecordVideo(
+                    envs,
+                    f"videos/{run_name}",
+                    step_trigger=lambda step: step % cfg.capture_video_freq == 0,
+                    video_length=cfg.capture_video_len,
             )
         return envs
 

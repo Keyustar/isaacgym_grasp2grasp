@@ -1,0 +1,6 @@
+# load the default environment parameters, and override the ones we want to change
+defaults:
+  - nowrist
+
+# The base RobotHand class suffices for the default P0 robot for now
+name: nowristselect
